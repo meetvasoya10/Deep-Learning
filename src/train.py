@@ -42,5 +42,5 @@ model.compile(
 )
 
 model.fit(dataset, epochs=20)
-model.save_weights('models/rnn_tf.weights.h5')
-model.save('models/rnn_model.keras') 
+model.save_weights('../models/rnn_tf.weights.h5')
+model.save('../models/rnn_model.keras') 
