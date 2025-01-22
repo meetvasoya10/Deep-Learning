@@ -2,6 +2,8 @@ import json
 import numpy as np
 import tensorflow as tf
 from model import build_lstm_model
+import os
+from datetime import datetime
 
 # Load mappings and hyperparameters
 with open("../data/chars.json", "r") as f:
@@ -42,3 +44,9 @@ def generate_text(start_str, temperature=0.5, max_length=500):
     return "".join(generated)
 
 print(generate_text("romeo:", temperature=0.5))
+
+ # Save to outputs/ with timestamp
+os.makedirs("../outputs", exist_ok=True)
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+with open(f"../outputs/generated_{timestamp}.txt", "w") as f:
+    f.write(generate_text("romeo:", temperature=0.5))
