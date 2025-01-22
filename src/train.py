@@ -1,46 +1,48 @@
-import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-
+from model import build_lstm_model
 import numpy as np
-import tensorflow as tf
-from model import SimpleRNNModel
+import json
+import os
 
-# Full corrected data pipeline
+# Load and preprocess data
 text = open("../data/shakespeare.txt").read().lower()
 chars = sorted(list(set(text)))
 char_to_idx = {c: i for i, c in enumerate(chars)}
+idx_to_char = {i: c for i, c in enumerate(chars)}
+
+# Save mappings for generate.py
+os.makedirs("../data", exist_ok=True)
+with open("../data/chars.json", "w") as f:
+    json.dump({"chars": chars, "char_to_idx": char_to_idx}, f)
+
+# Convert text to indices
 data = [char_to_idx[c] for c in text]
 
-sequence_length = 50
-step = sequence_length  # Non-overlapping sequences
+# Create sequences and targets
+sequence_length = 100  # Match this in generate.py
 X = []
 y = []
-for i in range(0, len(data) - sequence_length, step):
+for i in range(0, len(data) - sequence_length, sequence_length):
     X.append(data[i:i+sequence_length])
     y.append(data[i+sequence_length])
 
 X = np.array(X)
 y = np.array(y)
 
-# Dataset with on-the-fly one-hot encoding
-dataset = tf.data.Dataset.from_tensor_slices((X, y))
-dataset = dataset.map(lambda x, y: (tf.one_hot(x, len(chars)), tf.one_hot(y, len(chars))))
-dataset = dataset.batch(32).shuffle(10000)
+# Build model
+vocab_size = len(chars)
+embedding_dim = 256
+hidden_size = 512
 
-# Initialize model
-model = SimpleRNNModel(
-    input_size=len(chars),
-    hidden_size=128,
-    output_size=len(chars)
-).get_model()
-
-# Compile and train
+model = build_lstm_model(vocab_size, embedding_dim, hidden_size, sequence_length)
 model.compile(
-    optimizer='adam',
-    loss='categorical_crossentropy',
-    metrics=['accuracy']
+    optimizer="adam",
+    loss="sparse_categorical_crossentropy",  # For integer targets
+    metrics=["accuracy"]
 )
 
-model.fit(dataset, epochs=20)
-model.save_weights('../models/rnn_tf.weights.h5')
-model.save('../models/rnn_model.keras') 
+# Train
+model.fit(X, y, batch_size=64, epochs=20)
+
+# Save
+os.makedirs("../models", exist_ok=True)
+model.save("../models/lstm_model.keras")
