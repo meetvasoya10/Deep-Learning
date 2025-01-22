@@ -43,9 +43,9 @@ def generate_text(start_str, temperature=0.5, max_length=500):
     
     return "".join(generated)
 
-print(generate_text("romeo:", temperature=0.5))
+print(generate_text("romeo: but soft, what light through yonder window breaks? it is the east, and juliet is the sun.", temperature=0.5))
 
- # Save to outputs/ with timestamp
+# Save to outputs/ with timestamp
 os.makedirs("../outputs", exist_ok=True)
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 with open(f"../outputs/generated_{timestamp}.txt", "w") as f:
